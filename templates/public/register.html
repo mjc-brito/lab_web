@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Criar conta{% endblock %}
+{% block content %}
+
+<div style="max-width:420px; margin:40px auto;">
+  <div class="card">
+    <div class="card-header">Criar conta</div>
+    <div class="card-body">
+
+      {% if messages %}
+        {% for message in messages %}
+        <div style="background:#d1e7dd; color:#0f5132; border:1px solid #badbcc;
+                    padding:10px 14px; border-radius:6px; font-size:13px; margin-bottom:16px;">
+          {{ message }}
+        </div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="form-group">
+          <label>{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}
+          <small style="color:#888; font-size:12px;">{{ field.help_text }}</small>
+          {% endif %}
+          {% if field.errors %}
+          <small style="color:#dc3545;">{{ field.errors|join:", " }}</small>
+          {% endif %}
+        </div>
+        {% endfor %}
+        <button class="btn btn-primary" type="submit" style="width:100%; padding:10px;">
+          Criar conta
+        </button>
+      </form>
+
+      <p style="margin-top:16px; text-align:center; font-size:13px; color:#666;">
+        Já tens conta? <a href="{% url 'login' %}">Iniciar sessão</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

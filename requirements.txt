@@ -1,0 +1,28 @@
+# Framework
+Django==5.2.6
+channels==4.3.1
+channels_redis==4.3.0
+daphne==4.2.1
+asgiref==3.9.1
+djangorestframework==3.16.1
+django-bootstrap5==25.2
+whitenoise==6.12.0
+
+# Base de dados / cache
+redis==6.4.0
+
+# Ambiente
+python-dotenv==1.2.2
+
+# Hardware
+pyserial==3.5
+
+# Ciência
+numpy==2.2.6
+scipy==1.15.3
+
+# Testes
+pytest==8.4.2
+pytest-django==4.11.1
+pytest-asyncio==1.1.0
+fakeredis==2.31.1

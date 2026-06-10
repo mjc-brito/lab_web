@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Início{% endblock %}
+{% block content %}
+
+<div style="text-align:center; padding: 48px 0 32px;">
+  <div style="font-size:48px; margin-bottom:12px;">🔬</div>
+  <h1 style="font-size:26px; font-weight:700; color:#2c5068; margin-bottom:8px;">
+    Laboratório Remoto de Controlo
+  </h1>
+  <p style="color:#666; font-size:15px; max-width:520px; margin:0 auto 28px;">
+    Plataforma da NOVA FCT para execução remota de experiências de controlo.
+    Escreve código Python no navegador e controla o equipamento físico do laboratório.
+  </p>
+
+  {% if user.is_authenticated %}
+    <a class="btn btn-primary" href="{% url 'queue_control' %}"
+       style="font-size:15px; padding:11px 28px;">
+      Entrar no Laboratório →
+    </a>
+  {% else %}
+    <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+      <a class="btn btn-primary" href="{% url 'login' %}"
+         style="font-size:15px; padding:11px 28px;">Iniciar sessão</a>
+      <a class="btn btn-secondary" href="{% url 'register' %}"
+         style="font-size:15px; padding:11px 28px;">Criar conta</a>
+      <a class="btn btn-secondary" href="{% url 'about' %}"
+         style="font-size:15px; padding:11px 28px; background:#79aec8;">Saber mais</a>
+    </div>
+  {% endif %}
+</div>
+
+<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+            gap:16px; margin-top:8px;">
+
+  <div class="card">
+    <div class="card-header">📋 Fila de acesso</div>
+    <div class="card-body" style="color:#555; font-size:13px; line-height:1.7;">
+      Apenas um utilizador pode controlar o equipamento de cada vez.
+      Os restantes ficam numa fila com a sua posição em tempo real.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">🐍 Editor Python</div>
+    <div class="card-body" style="color:#555; font-size:13px; line-height:1.7;">
+      Escreve e executa código Python directamente no navegador.
+      NumPy disponível sem importação. Variáveis persistem entre execuções.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">💾 Guardar dados</div>
+    <div class="card-body" style="color:#555; font-size:13px; line-height:1.7;">
+      Usa o botão <strong>Guardar como</strong> para descarregar os resultados
+      da experiência directamente para o teu computador em formato <code>.npz</code>.
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}
