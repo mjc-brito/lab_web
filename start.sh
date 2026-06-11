@@ -4,7 +4,7 @@ set -e
 # ---------------------------------------------------------------------------
 # Configuração
 # ---------------------------------------------------------------------------
-PROJECT_DIR=~/django_playground/lab_web
+PROJECT_DIR=~/lab_web
 VENV=$PROJECT_DIR/venv
 CERTS_DIR=$PROJECT_DIR/certs
 HTTP_PORT=8000

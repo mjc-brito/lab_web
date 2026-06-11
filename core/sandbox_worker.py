@@ -8,7 +8,14 @@ import io
 import json
 import traceback
 import base64
+import os
 import numpy as np
+
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
+
+from core.hardware import hw_apply_input, hw_read_output, reset_mock
 
 _namespace = {}
 
@@ -20,11 +27,13 @@ _namespace = {}
 def _safe_builtins():
     import builtins
     blocked = {"open", "breakpoint", "input", "memoryview"}
-    return {
+    safe = {
         name: getattr(builtins, name)
         for name in dir(builtins)
         if name not in blocked and not name.startswith("_")
     }
+    safe["__import__"] = builtins.__import__
+    return safe
 
 
 # ---------------------------------------------------------------------------
@@ -115,25 +124,30 @@ def execute(code: str) -> dict:
 
     def start_control():
         state["running"] = True
-        state["last_output"] = 0.0
         state["outputs"] = []
+        hw_apply_input(0.0)
+        state["last_output"] = hw_read_output()
         print("Controlo iniciado.")
 
     def apply_input(u):
         if not state["running"]:
             raise RuntimeError("Chame start_control() primeiro.")
-        state["last_output"] = 0.8 * state["last_output"] + 0.2 * float(u)
-        return state["last_output"]
+        hw_apply_input(float(u))
+        result = hw_read_output()
+        state["last_output"] = result
+        return result
 
     def read_output():
         if not state["running"]:
             raise RuntimeError("Chame start_control() primeiro.")
-        val = state["last_output"]
+        val = hw_read_output()
+        state["last_output"] = val
         state["outputs"].append(val)
         return val
 
     def stop_control():
         state["running"] = False
+        hw_apply_input(0.0)
         print("Controlo encerrado.")
 
     _namespace["start_control"] = start_control
@@ -181,6 +195,7 @@ def save_all() -> dict:
 
 def clear_vars() -> dict:
     _namespace.clear()
+    reset_mock()
     return {"type": "cleared"}
 
 
