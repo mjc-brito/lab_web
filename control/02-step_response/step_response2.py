@@ -2,7 +2,7 @@ import time
 import numpy as np
 
 Ts     = 0.1
-levels = [(0.0, 5.0), (1.0, 20.0), (0.0, 5.0)]
+levels = [(0.0, 5.0), (1.0, 120.0), (0.0, 30.0)]
 
 u_list, y_list = [], []
 
