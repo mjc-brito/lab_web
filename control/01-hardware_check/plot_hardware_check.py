@@ -22,4 +22,4 @@ ax.grid(True)
 ax.set_ylim(-0.05, 4)
 
 plt.tight_layout()
-plt.savefig("hardware_check.png", dpi=150)
+plt.savefig("img_hardware_check.png", dpi=150)
