@@ -36,14 +36,18 @@
   .vars-header {
     background: #f0f0f0; padding: 6px 10px;
     font-weight: bold; font-size: 13px; border-bottom: 1px solid #ccc;
+    display: flex; align-items: center; justify-content: space-between;
   }
+  .vars-header-chk { display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: normal; color: #555; }
   #vars-table { flex: 1; overflow-y: auto; font-size: 13px; }
   #vars-table table { width: 100%; border-collapse: collapse; }
   #vars-table th {
     background: #e8e8e8; padding: 4px 8px;
     text-align: left; font-size: 12px; position: sticky; top: 0;
   }
+  #vars-table th.th-chk { text-align: center; width: 28px; }
   #vars-table td { padding: 3px 8px; border-bottom: 1px solid #eee; cursor: pointer; }
+  #vars-table td.td-chk { text-align: center; cursor: default; }
   #vars-table tr:hover td { background: #f5f5ff; }
   .var-name { font-weight: bold; color: #2255aa; }
   .var-val  { color: #555; max-width: 100px; overflow: hidden;
@@ -110,12 +114,24 @@ print(y)"></textarea>
     </div>
 
     <div class="lab-right">
-      <div class="vars-header">Espaço de trabalho</div>
+      <div class="vars-header">
+        <span>Espaço de trabalho</span>
+        <label class="vars-header-chk">
+          <input type="checkbox" id="chk-all" onchange="toggleAllVars(this.checked)" checked>
+          todos
+        </label>
+      </div>
       <div id="vars-table">
         <table>
-          <thead><tr><th>Nome</th><th>Valor</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Valor</th>
+              <th class="th-chk">✓</th>
+            </tr>
+          </thead>
           <tbody id="vars-body">
-            <tr><td colspan="2" style="color:#aaa; text-align:center; padding:12px;">
+            <tr><td colspan="3" style="color:#aaa; text-align:center; padding:12px;">
               Sem variáveis
             </td></tr>
           </tbody>
@@ -155,13 +171,11 @@ function clearOutput() { document.getElementById("output-panel").innerHTML = "";
 // Fallback automático para http:// (descarrega para pasta Downloads).
 // ---------------------------------------------------------------------------
 async function triggerSaveAs(data_b64, suggestedName) {
-  // reconstrói bytes correctamente (necessário para binários)
   const binary = atob(data_b64);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
   const blob = new Blob([bytes], { type: "application/octet-stream" });
 
-  // API nativa — abre explorador do SO (Windows Explorer, Nautilus, Finder...)
   if (window.showSaveFilePicker) {
     try {
       const handle = await window.showSaveFilePicker({
@@ -177,12 +191,10 @@ async function triggerSaveAs(data_b64, suggestedName) {
       appendOutput(`✅ Guardado: ${suggestedName}\n`, "stdout");
       return;
     } catch (e) {
-      if (e.name === "AbortError") return; // utilizador cancelou — não faz nada
-      // outro erro inesperado → cai no fallback
+      if (e.name === "AbortError") return;
     }
   }
 
-  // Fallback: download directo para pasta Downloads (http:// sem HTTPS)
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -195,11 +207,17 @@ async function triggerSaveAs(data_b64, suggestedName) {
 }
 
 // ---------------------------------------------------------------------------
-// "Guardar como" — pede todos os dados ao worker e abre explorador
+// "Guardar como" — envia apenas as variáveis seleccionadas
 // ---------------------------------------------------------------------------
 function saveAs() {
   if (!wsControl || wsControl.readyState !== WebSocket.OPEN) return;
-  wsControl.send(JSON.stringify({ action: "save_all" }));
+  const selected = [...document.querySelectorAll(".var-chk:checked")]
+                     .map(cb => cb.dataset.name);
+  if (selected.length === 0) {
+    appendOutput("Nenhuma variável seleccionada.\n", "stderr");
+    return;
+  }
+  wsControl.send(JSON.stringify({ action: "save_vars", names: selected }));
 }
 
 // ---------------------------------------------------------------------------
@@ -267,9 +285,6 @@ function initControl() {
     } else if (data.type === "vars_update") {
       updateVarsPanel(data.vars);
     } else if (data.type === "download" || data.type === "save_result") {
-      // vem de save() no código Python ou do botão "Guardar como"
-      // triggerSaveAs é chamado por clique (via botão ou save() → onmessage
-      // imediato após clique em Executar) — Chrome permite o download
       triggerSaveAs(data.data_b64, data.filename);
     } else if (data.type === "session_expired") {
       clearInterval(timerInterval);
@@ -322,23 +337,46 @@ function startTimer(seconds) {
 // ---------------------------------------------------------------------------
 // Painel de variáveis
 // ---------------------------------------------------------------------------
+function toggleAllVars(checked) {
+  document.querySelectorAll(".var-chk").forEach(cb => cb.checked = checked);
+}
+
 function updateVarsPanel(vars) {
   const tbody = document.getElementById("vars-body");
   const keys = Object.keys(vars);
   if (!keys.length) {
-    tbody.innerHTML = `<tr><td colspan="2" style="color:#aaa;text-align:center;padding:12px;">Sem variáveis</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="3" style="color:#aaa;text-align:center;padding:12px;">Sem variáveis</td></tr>`;
+    document.getElementById("chk-all").checked = false;
     return;
   }
+  // preserva estado dos checkboxes existentes antes de redesenhar
+  const prevChecked = new Set(
+    [...document.querySelectorAll(".var-chk:checked")].map(cb => cb.dataset.name)
+  );
+  const isFirstRender = prevChecked.size === 0 && document.querySelectorAll(".var-chk").length === 0;
+
   tbody.innerHTML = keys.map(name => {
     const val = vars[name];
     const display = Array.isArray(val)
       ? (Array.isArray(val[0]) ? `[${val.length}×${val[0].length}]` : `[${val.length}]`)
       : String(val);
+    // nova variável: seleccionada por defeito; existente: mantém estado anterior
+    const checked = isFirstRender || !document.querySelector(`.var-chk[data-name="${name}"]`)
+      ? true
+      : prevChecked.has(name);
     return `<tr onclick="inspectVar('${name}')">
       <td class="var-name">${name}</td>
       <td class="var-val" title="${display}">${display}</td>
+      <td class="td-chk" onclick="event.stopPropagation()">
+        <input type="checkbox" class="var-chk" data-name="${name}" ${checked ? "checked" : ""}>
+      </td>
     </tr>`;
   }).join("");
+
+  // actualiza o checkbox "todos" conforme o estado actual
+  const total = document.querySelectorAll(".var-chk").length;
+  const checked = document.querySelectorAll(".var-chk:checked").length;
+  document.getElementById("chk-all").checked = total > 0 && total === checked;
 }
 </script>
 {% endblock %}
