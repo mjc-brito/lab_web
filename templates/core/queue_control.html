@@ -188,7 +188,7 @@ async function triggerSaveAs(data_b64, suggestedName) {
       const writable = await handle.createWritable();
       await writable.write(blob);
       await writable.close();
-      appendOutput(`✅ Guardado: ${suggestedName}\n`, "stdout");
+      appendOutput(`✅ Guardado!\n`, "stdout");
       return;
     } catch (e) {
       if (e.name === "AbortError") return;
@@ -203,7 +203,7 @@ async function triggerSaveAs(data_b64, suggestedName) {
   a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 5000);
-  appendOutput(`📥 A guardar: ${suggestedName}\n`, "stdout");
+  appendOutput(`📥 A guardar\n`, "stdout");
 }
 
 // ---------------------------------------------------------------------------

@@ -211,6 +211,7 @@ class ControlConsumer(AsyncWebsocketConsumer):
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
+            limit=10 * 1024 * 1024,
         )
         await asyncio.wait_for(
             self._sandbox.stdout.readline(), timeout=5.0
