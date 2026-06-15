@@ -12,8 +12,11 @@ if (-not $device) {
 $busid = ($device -split "\s+")[0].Trim()
 Write-Host "Arduino encontrado: $busid"
 
-usbipd bind --busid $busid 2>$null
 usbipd detach --busid $busid 2>$null
+usbipd unbind --busid $busid 2>$null
+Start-Sleep -Milliseconds 500
+usbipd bind --busid $busid 2>$null
+Start-Sleep -Milliseconds 500
 usbipd attach --wsl --busid $busid
 
 if ($LASTEXITCODE -ne 0) {
