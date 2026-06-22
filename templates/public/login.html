@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Iniciar sessão{% endblock %}
+{% block content %}
+
+<div style="max-width:380px; margin:40px auto;">
+  <div class="card">
+    <div class="card-header">Iniciar sessão</div>
+    <div class="card-body">
+      {% if form.errors %}
+      <div style="background:#f8d7da; color:#842029; border:1px solid #f5c2c7;
+                  padding:10px 14px; border-radius:6px; font-size:13px; margin-bottom:16px;">
+        Credenciais inválidas. Tenta novamente.
+      </div>
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+          <label>Utilizador</label>
+          <input type="text" name="username" autofocus autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label>Palavra-passe</label>
+          <input type="password" name="password" autocomplete="current-password">
+        </div>
+        <button class="btn btn-primary" type="submit" style="width:100%; padding:10px;">
+          Entrar
+        </button>
+      </form>
+
+      <div style="margin-top:16px; display:flex; justify-content:space-between;
+                  font-size:13px; color:#666;">
+        <a href="{% url 'password_reset' %}">Esqueceu a palavra-passe?</a>
+        <a href="{% url 'register' %}">Criar conta</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

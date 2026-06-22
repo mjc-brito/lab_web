@@ -1,0 +1,57 @@
+SINTONIZAÇÃO PID — MÉTODO DA CURVA DE REACÇÃO (ZIEGLER-NICHOLS, 1.º MÉTODO)
+Referência: Paulo Gil, Implementação de Controladores PID, p.5
+            Ogata, Engenharia de Controle Moderno, Cap.8 p.523
+Dados de entrada: ../02-step_response/uyt2.npz
+
+============================================================
+PARÂMETROS DO PROCESSO IDENTIFICADOS
+============================================================
+K  = 0.315595  (ganho estático: variação normalizada de saída
+                por variação normalizada de entrada)
+
+Dois conjuntos de L e T foram calculados:
+  - 'suavizado': derivada de y suavizada por média deslizante
+    (janela de 10 amostras = 1.0s), mais robusto ao ruído
+  - 'raw': derivada de y sem suavização, sensível a spikes de ruído
+
+Parâmetro                              suavizado          raw
+-----------------------------------------------------------
+declive da tangente no ponto de inflexão     0.197313     0.278385
+t_inf: instante do ponto de inflexão [s]       0.8000       0.6000
+L: atraso do sistema [s]                  0.1410       0.3075
+T: constante de tempo do sistema [s]       1.5995       1.1337
+
+============================================================
+GANHOS DO CONTROLADOR PID (ZIEGLER-NICHOLS, 1.º MÉTODO)
+============================================================
+Fórmulas aplicadas (Paulo Gil p.5, tabela PID):
+  Kp = 1.2 * T / L
+  Ti = 2 * L        (tempo integral)
+  Td = 0.5 * L      (tempo derivativo)
+  Ki = Kp / Ti      (ganho integral, usado na equação às diferenças)
+  Kd = Kp * Td      (ganho derivativo, usado na equação às diferenças)
+
+Equação às diferenças do controlador (Paulo Gil p.7):
+  u(k) = u(k-1)
+       + Kp * (e(k) - e(k-1))
+       + Ki * Ts * (e(k) + e(k-1)) / 2
+       + Kd / Ts * (e(k) - 2*e(k-1) + e(k-2))
+
+Ganho                                  suavizado          raw
+-----------------------------------------------------------
+Kp (ganho proporcional)                13.616097     4.424749
+Ki (ganho integral)                    48.297092     7.195850
+Kd (ganho derivativo)                   0.959675     0.680198
+
+============================================================
+RECOMENDAÇÃO
+============================================================
+Usar os valores da coluna 'suavizado' como ponto de partida.
+Os valores 'raw' servem de referência para avaliar o impacto
+do ruído de sensor na sintonização.
+Ziegler-Nichols fornece um ponto de partida — ajuste fino
+pode ser necessário após teste no processo real.
+Referência: Ogata p.522 — 'as regras de sintonia de
+Ziegler-Nichols fornecem estimativas dos valores dos
+parâmetros e proporcionam um ponto de partida na sintonia
+fina, e não os valores definitivos'.

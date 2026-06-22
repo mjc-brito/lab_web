@@ -1,0 +1,139 @@
+# ===========================================================================
+# Python
+# ===========================================================================
+
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+*.so
+
+# Distribuição e packaging
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+
+# ===========================================================================
+# Ambiente virtual
+# ===========================================================================
+
+venv/
+env/
+.venv/
+.env_local/
+
+# ===========================================================================
+# Variáveis de ambiente — NUNCA commitar
+# ===========================================================================
+
+.env
+
+# O .env.example é commitado — é o template sem valores reais
+# .env.example  ← não ignorar
+
+# ===========================================================================
+# Django
+# ===========================================================================
+
+# Base de dados local
+db.sqlite3
+db.sqlite3-journal
+
+# Ficheiros estáticos compilados (gerados por collectstatic)
+staticfiles/
+
+# Media uploads (se existirem)
+media/
+
+# Logs
+*.log
+logs/
+
+# ===========================================================================
+# Certificados SSL — NUNCA commitar chaves privadas
+# ===========================================================================
+
+certs/
+
+# ===========================================================================
+# Testes e cobertura
+# ===========================================================================
+
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+
+# ===========================================================================
+# Docker
+# ===========================================================================
+
+# Não ignorar: Dockerfile, docker-compose.yml, docker/ — esses são commitados
+# Ignorar apenas dados persistentes gerados em runtime (se usares bind mounts)
+docker-data/
+
+# ===========================================================================
+# IDEs e editores
+# ===========================================================================
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# PyCharm / IntelliJ
+.idea/
+
+# Vim / Emacs
+*.swp
+*.swo
+*~
+\#*\#
+.#*
+
+# ===========================================================================
+# Sistema operativo
+# ===========================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+.directory
+
+# ===========================================================================
+# Jupyter / notebooks (opcional — commitares ou não depende da tua preferência)
+# ===========================================================================
+
+# .ipynb_checkpoints/     ← descomentar se não quiseres commitar checkpoints
+.ipynb_checkpoints/
+
+# ===========================================================================
+# Ficheiros gerados por ferramentas do projecto
+# ===========================================================================
+
+# Outros
+conteudo_projeto.txt
+estrutura_projeto.txt
+estrutura.txt
+requirements.bak
+requirements_clean.txt

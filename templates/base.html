@@ -1,0 +1,225 @@
+{% load static %}
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Laboratório Remoto{% endblock %} — NOVA FCT</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --brand:       #417690;
+      --brand-dark:  #2c5068;
+      --brand-light: #f0f6fa;
+      --accent:      #79aec8;
+      --text:        #333;
+      --muted:       #666;
+      --border:      #ddd;
+      --white:       #fff;
+      --radius:      6px;
+      --shadow:      0 2px 8px rgba(0,0,0,0.10);
+      --nav-h:       52px;
+    }
+
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      font-size: 14px;
+      color: var(--text);
+      background: #f5f5f5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Navbar ── */
+    nav {
+      background: var(--brand);
+      height: var(--nav-h);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .nav-brand {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--white);
+      text-decoration: none;
+      letter-spacing: 0.3px;
+      margin-right: 24px;
+    }
+    .nav-links {
+      display: flex;
+      gap: 4px;
+      flex: 1;
+    }
+    .nav-links a {
+      color: rgba(255,255,255,0.85);
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: var(--radius);
+      transition: background 0.15s;
+      font-size: 13px;
+    }
+    .nav-links a:hover { background: rgba(255,255,255,0.15); color: #fff; }
+    .nav-user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: rgba(255,255,255,0.85);
+      font-size: 13px;
+    }
+    .nav-user span { font-weight: 600; color: #fff; }
+    .btn-nav {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 5px 12px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 13px;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+    .btn-nav:hover { background: rgba(255,255,255,0.28); }
+
+    /* ── Conteúdo principal ── */
+    main {
+      flex: 1;
+      padding: 32px 24px;
+      max-width: 960px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .card-header {
+      background: var(--brand);
+      color: #fff;
+      padding: 14px 20px;
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+    .card-body { padding: 24px; }
+
+    /* ── Botões ── */
+    .btn {
+      display: inline-block;
+      padding: 8px 18px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+      transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.88; }
+    .btn-primary  { background: var(--brand); color: #fff; }
+    .btn-success  { background: #28a745; color: #fff; }
+    .btn-danger   { background: #dc3545; color: #fff; }
+    .btn-secondary{ background: #6c757d; color: #fff; }
+
+    /* ── Formulários ── */
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 14px;
+      transition: border-color 0.15s;
+    }
+    .form-group input:focus, .form-group select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(121,174,200,0.2);
+    }
+
+    /* ── Mensagens ── */
+    .messages { list-style: none; margin-bottom: 16px; }
+    .messages li {
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+    .messages .error   { background: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
+    .messages .success { background: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
+    .messages .info    { background: #d0e8f1; color: #084298; border: 1px solid #b6d4fe; }
+
+    /* ── Links ── */
+    a { color: var(--brand); }
+    a:hover { color: var(--brand-dark); }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 14px;
+      font-size: 12px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      background: var(--white);
+    }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="{% url 'home' %}">🔬 Lab Remoto FCT</a>
+  <div class="nav-links">
+    <a href="{% url 'home' %}">Início</a>
+    <a href="{% url 'about' %}">Sobre</a>
+    {% if user.is_authenticated %}
+    <a href="{% url 'queue_control' %}">Laboratório</a>
+    {% endif %}
+  </div>
+  <div class="nav-user">
+    {% if user.is_authenticated %}
+      Olá, <span>{{ user.username }}</span>
+      <form action="{% url 'logout' %}" method="post" style="display:inline;">
+        {% csrf_token %}
+        <button class="btn-nav" type="submit">Sair</button>
+      </form>
+    {% else %}
+      <a class="btn-nav" href="{% url 'login' %}">Entrar</a>
+    {% endif %}
+  </div>
+</nav>
+
+<main>
+  {% if messages %}
+  <ul class="messages">
+    {% for message in messages %}
+    <li class="{{ message.tags }}">{{ message }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% block content %}{% endblock %}
+</main>
+
+<footer>
+  Laboratório Remoto — NOVA FCT &nbsp;·&nbsp; Departamento de Engenharia Electrotécnica e de Computadores
+</footer>
+
+</body>
+</html>

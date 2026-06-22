@@ -1,0 +1,382 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  #control-section {
+    display: none;
+    height: calc(100vh - 80px);
+    flex-direction: column;
+  }
+  .lab-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 0; border-bottom: 1px solid #ccc;
+    margin-bottom: 8px; flex-wrap: wrap;
+  }
+  .lab-body { display: flex; flex: 1; gap: 8px; overflow: hidden; }
+  .lab-left  { display: flex; flex-direction: column; flex: 3; gap: 6px; overflow: hidden; }
+  #code {
+    flex: 1; font-family: "Courier New", monospace; font-size: 14px;
+    padding: 8px; border: 1px solid #aaa; border-radius: 4px;
+    resize: none; background: #1e1e1e; color: #d4d4d4;
+  }
+  .panel-label {
+    font-size: 12px; font-weight: bold; color: #555;
+    padding: 3px 0; border-bottom: 1px solid #ddd; margin-bottom: 2px;
+  }
+  #output-panel {
+    flex: 1; font-family: "Courier New", monospace; font-size: 13px;
+    background: #1e1e1e; color: #d4d4d4; border: 1px solid #aaa;
+    border-radius: 4px; padding: 8px; overflow-y: auto; white-space: pre-wrap;
+  }
+  .lab-right {
+    display: flex; flex-direction: column;
+    flex: 1; min-width: 180px; max-width: 280px;
+    border: 1px solid #aaa; border-radius: 4px; overflow: hidden;
+  }
+  .vars-header {
+    background: #f0f0f0; padding: 6px 10px;
+    font-weight: bold; font-size: 13px; border-bottom: 1px solid #ccc;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .vars-header-chk { display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: normal; color: #555; }
+  #vars-table { flex: 1; overflow-y: auto; font-size: 13px; }
+  #vars-table table { width: 100%; border-collapse: collapse; }
+  #vars-table th {
+    background: #e8e8e8; padding: 4px 8px;
+    text-align: left; font-size: 12px; position: sticky; top: 0;
+  }
+  #vars-table th.th-chk { text-align: center; width: 28px; }
+  #vars-table td { padding: 3px 8px; border-bottom: 1px solid #eee; cursor: pointer; }
+  #vars-table td.td-chk { text-align: center; cursor: default; }
+  #vars-table tr:hover td { background: #f5f5ff; }
+  .var-name { font-weight: bold; color: #2255aa; }
+  .var-val  { color: #555; max-width: 100px; overflow: hidden;
+              text-overflow: ellipsis; white-space: nowrap; }
+  .vars-footer { padding: 6px; border-top: 1px solid #ccc; display: flex; gap: 4px; }
+
+  .btn { padding: 5px 14px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; }
+  .btn-run   { background: #28a745; color: white; }
+  .btn-clear { background: #6c757d; color: white; }
+  .btn-save  { background: #007bff; color: white; font-size: 12px; flex: 1; }
+  .btn-reset { background: #dc3545; color: white; font-size: 12px; flex: 1; }
+  .btn:hover    { opacity: 0.85; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  #timer { font-size: 18px; font-weight: bold; font-family: monospace; }
+  #timer.urgent { color: #dc3545; }
+</style>
+
+<!-- FILA -->
+<div id="queue-section">
+  <h2>Laboratório Remoto — A aguardar</h2>
+  <p>Posição na fila: <strong id="pos">?</strong></p>
+  <pre id="queue-log" style="color:#666; font-size:13px;"></pre>
+</div>
+
+<!-- VALIDAÇÃO -->
+<div id="validation-section" style="display:none;">
+  <div style="text-align:center; padding:40px 20px;">
+    <h2>🎉 Chegou a sua vez!</h2>
+    <p>Confirme a sua presença para entrar no laboratório.</p>
+    <p>Se não confirmar a tempo, voltará ao final da fila.</p>
+    <div style="margin:30px 0;">
+      <span id="entry-timer"
+            style="font-size:64px; font-weight:bold; font-family:monospace; color:#28a745;">
+        --
+      </span>
+      <div style="color:#888; font-size:14px;">segundos restantes</div>
+    </div>
+    <button id="btn-enter" onclick="confirmEntry()"
+            style="padding:16px 48px; font-size:20px; background:#28a745;
+                   color:white; border:none; border-radius:8px; cursor:pointer;">
+      ✅ Entrar
+    </button>
+  </div>
+</div>
+
+<!-- CONTROLO -->
+<div id="control-section">
+  <div class="lab-header">
+    <strong>Laboratório Remoto</strong>
+    <span>Tempo restante: <span id="timer">--:--</span></span>
+    <button class="btn btn-run"   id="btn-run" onclick="runCode()">▶ Executar</button>
+    <button class="btn btn-clear" onclick="clearOutput()">🗑 Limpar</button>
+  </div>
+
+  <div class="lab-body">
+    <div class="lab-left">
+      <div class="panel-label">Editor</div>
+      <textarea id="code" placeholder="x = 10
+y = [i**2 for i in range(x)]
+print(y)"></textarea>
+
+      <div class="panel-label">Console</div>
+      <div id="output-panel"></div>
+    </div>
+
+    <div class="lab-right">
+      <div class="vars-header">
+        <span>Espaço de trabalho</span>
+        <label class="vars-header-chk">
+          <input type="checkbox" id="chk-all" onchange="toggleAllVars(this.checked)" checked>
+          todos
+        </label>
+      </div>
+      <div id="vars-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Valor</th>
+              <th class="th-chk">✓</th>
+            </tr>
+          </thead>
+          <tbody id="vars-body">
+            <tr><td colspan="3" style="color:#aaa; text-align:center; padding:12px;">
+              Sem variáveis
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="vars-footer">
+        <button class="btn btn-save" onclick="saveAs()">💾 Guardar como</button>
+        <button class="btn btn-reset" onclick="clearVars()">✕ Limpar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let wsQueue, wsControl;
+let sessionSeconds = 0, timerInterval, entryTimerInterval;
+
+// ---------------------------------------------------------------------------
+// Utilitários
+// ---------------------------------------------------------------------------
+function queueLog(msg) { document.getElementById("queue-log").textContent += msg + "\n"; }
+function wsURL(p) { return (location.protocol==="https:"?"wss":"ws")+"://"+location.host+p; }
+
+function appendOutput(msg, type) {
+  const el = document.getElementById("output-panel");
+  const span = document.createElement("span");
+  span.style.color = type === "stderr" ? "#f48771" : "#d4d4d4";
+  span.textContent = msg;
+  el.appendChild(span);
+  el.scrollTop = el.scrollHeight;
+}
+function clearOutput() { document.getElementById("output-panel").innerHTML = ""; }
+
+// ---------------------------------------------------------------------------
+// Download — abre explorador de ficheiros nativo do SO
+// Funciona em https:// e localhost via showSaveFilePicker.
+// Fallback automático para http:// (descarrega para pasta Downloads).
+// ---------------------------------------------------------------------------
+async function triggerSaveAs(data_b64, suggestedName) {
+  const binary = atob(data_b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  const blob = new Blob([bytes], { type: "application/octet-stream" });
+
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: suggestedName,
+        types: [{
+          description: "NumPy Archive",
+          accept: { "application/octet-stream": [".npz"] }
+        }]
+      });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      appendOutput(`✅ Guardado!\n`, "stdout");
+      return;
+    } catch (e) {
+      if (e.name === "AbortError") return;
+    }
+  }
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = suggestedName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  appendOutput(`📥 A guardar\n`, "stdout");
+}
+
+// ---------------------------------------------------------------------------
+// "Guardar como" — envia apenas as variáveis seleccionadas
+// ---------------------------------------------------------------------------
+function saveAs() {
+  if (!wsControl || wsControl.readyState !== WebSocket.OPEN) return;
+  const selected = [...document.querySelectorAll(".var-chk:checked")]
+                     .map(cb => cb.dataset.name);
+  if (selected.length === 0) {
+    appendOutput("Nenhuma variável seleccionada.\n", "stderr");
+    return;
+  }
+  wsControl.send(JSON.stringify({ action: "save_vars", names: selected }));
+}
+
+// ---------------------------------------------------------------------------
+// Fila
+// ---------------------------------------------------------------------------
+wsQueue = new WebSocket(wsURL("/ws/fila/"));
+wsQueue.onopen = () => {
+  wsQueue.send(JSON.stringify({ action: "hello" }));
+  setInterval(() => wsQueue.send(JSON.stringify({ action: "hello" })), 5000);
+};
+wsQueue.onmessage = (e) => {
+  const data = JSON.parse(e.data);
+  if (data.type === "your_turn") {
+    document.getElementById("queue-section").style.display = "none";
+    document.getElementById("validation-section").style.display = "block";
+    startEntryCountdown(data.timeout_seconds);
+  } else if (data.type === "entry_confirmed") {
+    clearInterval(entryTimerInterval);
+    document.getElementById("validation-section").style.display = "none";
+    document.getElementById("control-section").style.display = "flex";
+    wsQueue.close();
+    initControl();
+  } else if (data.type === "entry_expired") {
+    clearInterval(entryTimerInterval);
+    document.getElementById("validation-section").style.display = "none";
+    document.getElementById("queue-section").style.display = "block";
+    queueLog("⏰ Tempo esgotado. Voltou ao final da fila.");
+  } else if (data.posicao !== undefined) {
+    const pos = data.posicao;
+    document.getElementById("pos").textContent =
+      pos === 0 ? "1º (a aguardar confirmação...)" : (pos + 1) + "º";
+  }
+};
+wsQueue.onerror = () => queueLog("Erro na ligação à fila.");
+
+function confirmEntry() {
+  document.getElementById("btn-enter").disabled = true;
+  wsQueue.send(JSON.stringify({ action: "confirm_entry" }));
+}
+function startEntryCountdown(seconds) {
+  let r = seconds;
+  const el = document.getElementById("entry-timer");
+  clearInterval(entryTimerInterval);
+  el.textContent = r; el.style.color = "#28a745";
+  entryTimerInterval = setInterval(() => {
+    r--; el.textContent = r;
+    if (r <= 10) el.style.color = "#dc3545";
+    if (r <= 0)  clearInterval(entryTimerInterval);
+  }, 1000);
+}
+
+// ---------------------------------------------------------------------------
+// Controlo
+// ---------------------------------------------------------------------------
+function initControl() {
+  wsControl = new WebSocket(wsURL("/ws/control/"));
+  wsControl.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+    if (data.type === "session_info") {
+      startTimer(data.duration_seconds);
+    } else if (data.type === "stdout") {
+      appendOutput(data.message, "stdout");
+    } else if (data.type === "stderr") {
+      appendOutput(data.message, "stderr");
+    } else if (data.type === "vars_update") {
+      updateVarsPanel(data.vars);
+    } else if (data.type === "download" || data.type === "save_result") {
+      triggerSaveAs(data.data_b64, data.filename);
+    } else if (data.type === "session_expired") {
+      clearInterval(timerInterval);
+    }
+  };
+  wsControl.onclose = () => {
+    appendOutput("\n🔌 Sessão encerrada. A regressar à fila...\n", "stderr");
+    clearInterval(timerInterval);
+    document.getElementById("btn-run").disabled = true;
+    setTimeout(() => window.location.reload(), 2000);
+  };
+}
+
+function runCode() {
+  if (!wsControl || wsControl.readyState !== WebSocket.OPEN) {
+    appendOutput("Sem ligação ao servidor.\n", "stderr"); return;
+  }
+  const code = document.getElementById("code").value.trim();
+  if (!code) return;
+  wsControl.send(JSON.stringify({ action: "run_code", code }));
+}
+function clearVars() {
+  if (wsControl && wsControl.readyState === WebSocket.OPEN)
+    wsControl.send(JSON.stringify({ action: "clear_vars" }));
+}
+function inspectVar(name) {
+  if (wsControl && wsControl.readyState === WebSocket.OPEN)
+    wsControl.send(JSON.stringify({ action: "get_var", name }));
+}
+
+// ---------------------------------------------------------------------------
+// Timer de sessão
+// ---------------------------------------------------------------------------
+function startTimer(seconds) {
+  sessionSeconds = seconds; clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    if (sessionSeconds <= 0) {
+      clearInterval(timerInterval);
+      document.getElementById("timer").textContent = "00:00"; return;
+    }
+    sessionSeconds--;
+    const m = String(Math.floor(sessionSeconds / 60)).padStart(2, "0");
+    const s = String(sessionSeconds % 60).padStart(2, "0");
+    const el = document.getElementById("timer");
+    el.textContent = m + ":" + s;
+    el.classList.toggle("urgent", sessionSeconds <= 60);
+  }, 1000);
+}
+
+// ---------------------------------------------------------------------------
+// Painel de variáveis
+// ---------------------------------------------------------------------------
+function toggleAllVars(checked) {
+  document.querySelectorAll(".var-chk").forEach(cb => cb.checked = checked);
+}
+
+function updateVarsPanel(vars) {
+  const tbody = document.getElementById("vars-body");
+  const keys = Object.keys(vars);
+  if (!keys.length) {
+    tbody.innerHTML = `<tr><td colspan="3" style="color:#aaa;text-align:center;padding:12px;">Sem variáveis</td></tr>`;
+    document.getElementById("chk-all").checked = false;
+    return;
+  }
+  // preserva estado dos checkboxes existentes antes de redesenhar
+  const prevChecked = new Set(
+    [...document.querySelectorAll(".var-chk:checked")].map(cb => cb.dataset.name)
+  );
+  const isFirstRender = prevChecked.size === 0 && document.querySelectorAll(".var-chk").length === 0;
+
+  tbody.innerHTML = keys.map(name => {
+    const val = vars[name];
+    const display = Array.isArray(val)
+      ? (Array.isArray(val[0]) ? `[${val.length}×${val[0].length}]` : `[${val.length}]`)
+      : String(val);
+    // nova variável: seleccionada por defeito; existente: mantém estado anterior
+    const checked = isFirstRender || !document.querySelector(`.var-chk[data-name="${name}"]`)
+      ? true
+      : prevChecked.has(name);
+    return `<tr onclick="inspectVar('${name}')">
+      <td class="var-name">${name}</td>
+      <td class="var-val" title="${display}">${display}</td>
+      <td class="td-chk" onclick="event.stopPropagation()">
+        <input type="checkbox" class="var-chk" data-name="${name}" ${checked ? "checked" : ""}>
+      </td>
+    </tr>`;
+  }).join("");
+
+  // actualiza o checkbox "todos" conforme o estado actual
+  const total = document.querySelectorAll(".var-chk").length;
+  const checked = document.querySelectorAll(".var-chk:checked").length;
+  document.getElementById("chk-all").checked = total > 0 && total === checked;
+}
+</script>
+{% endblock %}
